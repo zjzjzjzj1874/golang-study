@@ -1,0 +1,18 @@
+@startuml
+autonumber
+== 心跳上报及接收 ==
+'actor User as user
+participant "redis" as redis
+participant "ai-bus" as bus
+participant "ai-agent" as agent
+participant "K8S集群" as k8s
+
+loop 60s心跳
+    agent -> k8s : 向K8S请求GPU信息
+    agent <-- k8s : 返回GPU信息
+    agent -> bus : 将GPU信息同步至bus
+    bus --> redis : GPU服务器信息入库(统计资源消耗使用)\n 所有GPU服务器只需要保证有一份数据即可
+end
+
+
+@enduml

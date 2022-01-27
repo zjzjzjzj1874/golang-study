@@ -1,0 +1,19 @@
+@startuml
+
+package "AI Services" {
+  node "AI-Center Services Group" as center
+  database "PostgreSQL" as PG
+
+  center <--> [srv-device-hub]
+  [srv-device-hub] ..> PG : use
+}
+
+package "External Device Group" as external {
+  node "IoT Platforms" as iot
+  node "Video Platforms" as video
+  node "Camera Groups"
+}
+
+[srv-device-hub] <-> external : sync
+
+@enduml

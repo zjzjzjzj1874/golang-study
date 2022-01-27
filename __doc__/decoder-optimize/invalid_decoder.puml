@@ -1,0 +1,45 @@
+@startuml
+title 失效解码任务通知活动图
+
+partition 解码端失效通知 {
+start
+while (srv-decoder通知调用状态更改接口)
+    :srv-decoder-center更改状态为【失效待通知】;
+    :通知Ai中心流失效;
+    :更改状态为【失效已通知】;
+endwhile
+end
+}
+
+partition 解码端失效通知补单任务 {
+start
+while (失效解码任务通知任务执行频率)
+    :从srv-decoder-center拉取解码任务数据;
+    note right
+      拉取条件
+      ====
+      * 逻辑删除字段为0
+      * 任务状态为【失效待通知】状态
+    end note
+    :通知Ai中心流失效;
+    :更改状态为【失效已通知】;
+endwhile
+stop
+}
+
+partition 中心失效通知补单任务 {
+start
+while (失效解码任务通知任务执行频率)
+    :从srv-ai-center拉取失效解码任务数据;
+    note right
+      拉取条件
+      ====
+      * 逻辑删除字段为0
+      * 任务状态为【失效】状态
+    end note
+    :下发解码端;
+    :更改状态为【有效】;
+endwhile
+stop
+}
+@enduml

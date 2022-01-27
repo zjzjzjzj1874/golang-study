@@ -1,0 +1,14 @@
+@startuml
+autonumber
+== 边缘节点消耗统计 ==
+actor User as user
+participant "云平台网关" as fire
+participant "IOT平台" as iot
+
+user -> fire : 边缘节点资源使用率
+fire -> iot : 获取边缘节点数据
+fire <-- iot : 返回结果集
+fire --> fire : 排序处理
+fire --> user : 返回边缘设备消耗信息
+
+@enduml

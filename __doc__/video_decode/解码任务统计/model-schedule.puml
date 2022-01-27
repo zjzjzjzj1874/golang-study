@@ -1,0 +1,34 @@
+@startuml
+skinparam defaultFontName Courier
+'skinparam shadowing false
+'skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title model-schedule任务调度时序图
+
+actor       "decoder"           as DD
+participant "model-schedule"    as MS
+participant "decoder-center"    as DB
+participant "model-dispatch"    as MD
+
+==model-schedule时序图==
+
+DD -> MS:1.解码图片分析(含设备场景关系)
+return
+|||
+note over MS:注:2,5s如何补偿分析-->记录上次分析帧率:设计简单算法
+MS -> MD:2.起协程,分析不同场景
+return 返回分析结果
+|||
+MS -> DB:3.分析失败的场景,写analyze_failure_log日志\n(记录失败原因;成功不写,减少log体量)
+
+@enduml
+
+改版任务
+1.分析入参增加,不再调用decoder-center的查询接口;
+2.成功日志不写,只向decoder-center写失败日志;
+3.model-dispatch服务出参:增加一个分析时间(用于统计);
+4.抽帧和分析频率,抽帧频率不是所有分析频率的公约数,需要添加分析补偿机制;
+    eg:摄像头有A和B场景,分析频率分别为2和5;那么该摄像头抽帧频率为2,A场景分析没有问题,但是B场景就需要补偿算法;

@@ -1,0 +1,60 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title decoder解码任务时序图
+
+actor       "decoder-task"      as DT
+participant "decoder"           as VD
+participant "decoder-center"    as DB
+participant "model-schedule"    as MS
+
+==Decoder模块服务初始化==
+
+loop 心跳上报(5s)
+  |||
+VD -> DB:1).当前解码任务(解码时间和抽帧频率);\n2).流失效的设备;
+return 1).decoder-center中的解码时间和抽帧频率;\n2).修改状态成功后,从内存中删除流失效设备;\n3).设备场景全量关系列表
+ |||
+end loop
+
+|||
+==请求 直播流解码 API==
+
+
+DT -> VD:创建解码任务
+ref over VD
+POST https://${decoder_host}/live
+
+入参:Min(抽帧频率),RTSP流地址...
+end ref
+
+return 解码任务创建成功
+
+activate VD
+
+
+group 直播流分析 校验
+    |||
+
+    group 开启协程 直播流分析
+
+    VD <- VD: 判断Min(抽帧频率)
+
+    VD -> VD: 将满足条件的图片,放内存中,设置过期时间,暴露URI,供下游服务消费
+    VD -> MS: 通知消费服务model-schedule,消费新的解码图片(入参包含该设备所有场景).
+    |||
+    end
+
+end
+
+deactivate DB
+
+
+deactivate DB
+
+@enduml

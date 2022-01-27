@@ -1,0 +1,21 @@
+@startuml
+package "分析场景实体"{
+    class AnalyzeEntity {
+      - 数据id bigint(19)
+      + 场景id bigint(19)
+      + 模型类型 tinyint(3)
+      + 名称 string
+      + Key string
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+    }
+    class "modelType" {
+      + 实体类 tinyint(1)
+      + 属性类 tinyint(1)
+    }
+}
+
+AnalyzeEntity <|-right- modelType
+
+@enduml

@@ -1,0 +1,26 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title video-decoder解码任务异常时序图
+
+participant "video-decoder"       as VD
+participant "decoder-task"        as DT
+
+==Video-Decoder模块服务初始化==
+
+loop 心跳上报(5s)
+ VD -> DT:心跳上报运行中的解码任务
+ |||
+ return decoder-task中运行的解码服务(帧率)
+
+ DT -> DT:task轮询任务(10s):数据库中所有分析中的任务 \n 所有分析任务对心跳上报任务做差集: \n 差集即发生异常的服务器未能正常上报心跳的任务 \n task自动终止差集任务,等待下一次重试
+
+end loop
+
+
+@enduml

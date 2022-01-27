@@ -1,0 +1,67 @@
+
+@startuml
+skinparam backgroundColor #EEEBDC
+
+title 电子围栏升级时序图
+
+box "中心端" #LightBlue
+	participant "web" as web
+	participant "bff-ai-manager" as mag
+    control "ai-task" as ai_task
+	database "ai-center" as center
+	participant "ai-agent" as agent
+end box
+
+box "解码分析端" #DarkSalmon
+	database "decoder-center" as decoder_center
+	control "decoder-task" as task
+	participant "decoder"
+	participant "model-schedule" as schedule
+	participant "model-dispatch" as dispatch
+end box
+
+' 电子围栏入库
+    ====
+    note over mag:电子围栏
+    web -[#2ab538]> mag: POST /创建电子围栏
+    mag -[#2ab538]> center: POST /电子围栏落库
+    return result
+    mag -[#2ab538]-> web: result
+    ====
+
+loop 中心端任务管理
+    ai_task -> center: 拉取分析任务
+    return result
+
+    ai_task -> agent:下发任务
+    agent -> decoder_center:电子围栏参数透传
+    return 返回落库结果
+    ai_task <-- agent:result
+end
+
+loop 解码分析端任务管理
+    task -> decoder_center: 拉取解码任务
+    return result
+
+    task -> decoder:下发解码任务(电子围栏)
+    return 同步返回
+end
+
+loop async:直播流解码
+    decoder -> schedule: 图片解码后,下发至模型调度服务
+    return 调用成功返回(异步分析)
+
+    schedule -> dispatch: 图形异步送分析(含电子围栏)
+    dispatch -[#2ab538]> ai原子模型 : 原子模型分析
+    return 分析结果
+    alt 实体与电子围栏重合度比较
+        dispatch -[#2ab538]-> dispatch :重合度达不到阈值会被过滤
+    end group
+    dispatch -[#2ab538]-> schedule: ai分析结果(已过滤)
+
+    schedule -> agent:投票去重结果,事件回调
+    schedule --> decoder_center:分析日志落库
+
+end
+
+@enduml

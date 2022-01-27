@@ -1,0 +1,25 @@
+@startuml
+package "失败日志实体"{
+    class TaskLog {
+      - 数据id bigint(19)
+      + 失败日志id bigint(19)
+      + 直播流任务id bigint(19)
+      + 设备id bigint(19)
+      + 分析类型 tinyint(3)
+      + 分析扩展参数 string
+      + 失败内容 string
+      + 消耗时间(AI那边取) float64
+      + 失败类型 failureType
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+    }
+
+    class "failureType" {
+      + 解码失败-DecodeFailure tinyint(1)
+      + 分析失败-AnalyzeFailure tinyint(1)
+    }
+}
+
+
+@enduml

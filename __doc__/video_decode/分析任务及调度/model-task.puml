@@ -1,0 +1,38 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title model-task 模型分析任务调度时序图
+
+actor       "video-decoder"     as VD
+participant "model-task"        as MT
+participant "atomic-model"      as AM
+
+
+|||
+==分发 图片消费通知 API==
+
+VD -> MT: NotifyPictureAnalyze
+
+ref over MT
+POST https://${model-task_host}/notify
+
+入参:图片URI,摄像头ID,场景...
+end ref
+
+|||
+MT -> AM: (1).调用实体分析模型
+return
+|||
+MT --> AM: (2).调用属性分析模型
+return
+|||
+MT --> AM: (3).(根据工作流判断是否结束分析...)
+
+
+
+@enduml

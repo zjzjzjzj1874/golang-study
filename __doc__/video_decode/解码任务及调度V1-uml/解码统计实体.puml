@@ -1,0 +1,24 @@
+@startuml
+package "解码统计实体"{
+    class decoder-statistic {
+      - 数据id bigint(19)
+      + 解码统计id bigint(19)
+      + 设备ID bigint(19)
+      + 统计日期(天为单位) bigint(19)
+      + 真实工作时长 int(11)
+      + 期望工作时长 int(11)
+      + 断流次数 int(11)
+      + 重试次数 int(11)
+      + 输出图片总数 int(11)
+      + 消费图片总数 int(11)
+      + 丢弃图片总数 int(11) TODO暂时无法取
+      + 平均解码耗时 int(11)
+      + 最大解码耗时 int(11)
+      + 最小解码耗时 int(11)
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+    }
+}
+
+@enduml

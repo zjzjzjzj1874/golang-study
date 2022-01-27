@@ -1,0 +1,33 @@
+@startuml
+skinparam defaultFontName Courier
+'skinparam shadowing false
+'skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title decoder-center解码任务时序图
+
+actor       "ai-agent"          as AA
+participant "decoder-center"    as DB
+
+==Decoder-Center创建解码及分析任务==
+AA -> DB:创建直播流解码分析任务
+return 成功创建
+
+|||
+==内存 设备场景管理==
+
+
+loop 设备场景管理(10min/loop)
+note over DB:update/read from DB之后都需要修改缓存
+|||
+ DB ->DB:缓存:1.设备场景关系;\n 2.待开启设备列表;\n 3.待工作设备列表
+|||
+end loop
+
+@enduml
+
+数据中心包含:
+1.相关实体的增删改查功能(当前四个实体:任务状态日志实体,失败日志实体,直播流任务管理实体和设备场景关系实体);
+2.接收decoder服务上报心跳的接口,返回设备场景关系列表;

@@ -1,0 +1,36 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title decoder-task 解码任务调度的时序图
+
+actor       "bff-gw-model"   as GM
+participant "decoder-task"   as DT
+participant "decoder"        as VD
+
+==Decoder-Task模块服务初始化==
+
+
+loop 数据库中分析中的摄像头场景和帧率(10s)
+ DT -> DT:数据库中运行的摄像头场景及帧率
+|||
+DT -> DT: 运行中摄像头场景和最小帧率写入内存 \n 待decoder心跳上报时传回去
+|||
+DT -> DT: 心跳传回来的任务,和所有的任务做一个对比,\n将心跳中不包含的任务状态设置为失败\n(保证video-decoder服务挂掉后,\n任务状态不能正常结束或变更)
+end loop
+
+|||
+
+loop 数据库中新增待开启的摄像头(10s)
+ DT -> DT:数据库中新增待分析\n摄像头场景及帧率,写入内存
+ |||
+DT -> VD: 开启分析的摄像头进行取流解码服务
+end loop
+
+|||
+
+@enduml

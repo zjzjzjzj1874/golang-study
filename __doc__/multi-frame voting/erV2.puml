@@ -1,0 +1,162 @@
+@startuml
+left to right direction
+
+!define PK <size:12><&key></size><b>
+!define FK <size:12><&link-intact></size><i>
+!define UK <size:12><&link-intact></size><i>
+!define PP <size:12><&caret-right></size>
+
+package model {
+    class Scene < 场景定义表(新增) > {
+      PK id : BIGINT
+      ..
+      FK scene_id(场景ID) : uint8
+      name(场景名称) : string
+      label(场景标签) : string
+      desc(场景描述) : string
+      ..
+      createTime : timestamp
+      updateTime : timestamp
+      deleteTime : timestamp
+    }
+
+    class SceneConfig < 场景默认配置表(新增) >{
+      PK id : BIGINT
+      ..
+      UK scene_config_id(场景配置ID) : int64
+      FK scene_id(场景ID) : uint8
+      default_config(默认规则) :SceneDefaultConfig
+      ..
+      createTime : timestamp
+      updateTime : timestamp
+      deleteTime : timestamp
+    }
+
+    class EntityType < 实体类型配置表(已有) >{
+      PK id : BIGINT
+      ..
+      FK entity_type_id(实体ID) : BIGINT
+      f_name(实体名称) : string
+      ..
+      ...
+      createTime : timestamp
+      updateTime : timestamp
+      deleteTime : timestamp
+    }
+
+    class Property < 属性配置表(已有) > {
+      PK id : BIGINT
+      ..
+      FK property_id(属性ID) : BIGINT
+      FK entity_type_id(实体ID) : BIGINT
+      f_name(属性名称) : string
+      ...
+      ..
+      createTime : timestamp
+      updateTime : timestamp
+      deleteTime : timestamp
+    }
+
+    class SceneEntityPropertyConfig < 场景实体属性配置表(已有) > {
+      PK id : BIGINT
+      ..
+      FK scene_id(场景ID) : uint8
+      FK property_id(属性ID) : BIGINT
+      FK scene_entity_id(场景实体ID) : BIGINT
+      f_vote(投票规则) : json
+      ...
+      ..
+      createTime : timestamp
+      updateTime : timestamp
+      deleteTime : timestamp
+    }
+
+    class SceneEntity < 场景实体配置(已有) > {
+      PK id : BIGINT
+      ..
+      FK scene_entity_id(ID) : BIGINT
+      FK entity_type_id(实体ID) : BIGINT
+      FK scene_id(场景ID) : BIGINT
+      ..
+      createTime : timestamp
+      updateTime : timestamp
+      deleteTime : timestamp
+    }
+
+    class LiveDevice < 设备场景配置表(已有) >{
+      PK id : BIGINT
+      ..
+      ...
+      f_parameter(分析参数) : Parameter
+      ...
+      ..
+      createTime : timestamp
+      updateTime : timestamp
+      deleteTime : timestamp
+    }
+
+    class DeviceAnalyzeOption < 设备场景配置表(已有) >{
+      PK id : BIGINT
+      ..
+      ...
+      f_parameter(分析参数) : Parameter
+      ...
+      ..
+      createTime : timestamp
+      updateTime : timestamp
+      deleteTime : timestamp
+    }
+}
+
+
+
+EntityType::entity_type_id *-- SceneEntity::entity_type_id
+EntityType::entity_type_id *-- Property::entity_type_id
+Property::property_id *-- SceneEntityPropertyConfig::property_id
+SceneEntity::scene_entity_id *-- SceneEntityPropertyConfig::scene_entity_id
+Scene::scene_id *-- SceneEntityPropertyConfig::scene_id
+Scene::scene_id *-- SceneEntity::scene_id
+Scene::scene_id *-- SceneConfig::scene_id
+
+SceneConfig::default_config *-- SceneDefaultConfig
+SceneEntityPropertyConfig::f_vote *-- VoteDefaultConfig
+VoteDefaultConfig::vote_type *-- VoteType
+DeviceAnalyzeOption::f_parameter *-- Parameter
+LiveDevice::f_parameter *-- Parameter
+
+enum Parameter < 分析参数(扩展) >{
+    VoteConfig(投票参数) : json
+    Fence(电子围栏) : int
+    EntityCount(实体数量) : int
+    ...
+    ..
+}
+
+enum SceneDefaultConfig < 场景默认规则(新增) >{
+    frame_rate(默认抽帧频率) : int64
+    vote_frame(默认投票帧数) : int64
+    analysis_period(默认分析时间段) : string(多段时间json的结果)
+}
+
+enum VoteDefaultConfig < 投票默认规则(新增) >{
+    vote_type(投票类型) :VoteType
+    vote_config(投票配置) : json
+    ....
+    ...
+}
+
+enum VoteType < 投票类型(新增) >{
+    NoVote(不投票) : int
+    SlidingWindow(滑动窗口) : int
+    ScoreAccumulate(分数累计) : int
+}
+
+Interface VoteConfig < 投票interface > {
+  - VoteType:
+  - ValueScoreRange:
+  -- Methods --
+  + Vote (cache) interface{}
+  + 实现见伪代码
+}
+
+@enduml

@@ -1,0 +1,109 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title decoder 解码任务的时序图
+
+actor       "bff-gw-model"        as GM
+participant "decoder"       as VD
+participant "decoder-task"        as DT
+participant "model-task"          as MT
+
+==Decoder模块服务初始化==
+
+loop 心跳上报(5s)
+ VD -> DT:服务中正在运行的解码任务
+ |||
+return decoder-task中运行的解码服务(帧率)
+end loop
+
+|||
+==请求 直播流分析 API==
+
+GM -> VD: CreateLiveAnalyze
+
+ref over VD
+POST https://${decoder_host}/live
+
+入参:Min(抽帧频率),场景,分析时间...
+end ref
+
+activate VD
+
+
+group 直播流分析 校验
+    |||
+    GM o<-- VD: 返回:成功开启分析
+
+    group 开启协程 直播流分析
+
+    VD <- VD: 判断Min(抽帧频率)是否变化,变化后重新计数抽帧
+
+    VD -> VD: 将满足条件的图片,转矩阵,放内存中,设置过期时间,暴露URI,供下游服务消费
+    VD -> MT: 通知消费任务,分发图片消息
+
+    end
+
+end
+
+deactivate DT
+
+
+|||
+==请求 视频分析 API==
+
+GM -> VD: CreateVideoAnalyze
+
+ref over VD
+POST https://${decoder_host}/video
+
+入参:抽帧频率,场景,分析时间...
+end ref
+
+group 视频分析 校验
+    |||
+    GM o<-- VD: 返回:成功分析
+
+    group 开启协程 视频分析
+
+    VD <- VD: 根据Min(场景帧率)频率抽帧,出图片,转矩阵
+
+    VD -> VD: 将满足条件的图片,放内存中,设置过期时间,暴露URI,供下游服务消费
+    VD -> MT: 通知消费任务,分发图片消息
+    end
+end
+
+deactivate DT
+
+
+|||
+==请求 图片分析 API==
+
+GM -> VD: CreatePictureAnalyze
+
+ref over VD
+POST https://${decoder_host}/picture
+
+入参:...
+end ref
+
+group 图片分析 校验
+    |||
+    GM o<-- VD: 返回:成功分析
+
+    group 图片分析
+    VD -> VD: 图片转化为二维矩阵
+
+    VD -> VD: 将图片放内存中,设置过期时间,暴露URI,供下游服务消费
+    VD -> MT: 通知消费任务,分发图片消息
+    end
+end
+
+
+deactivate DT
+
+@enduml

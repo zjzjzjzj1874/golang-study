@@ -1,0 +1,25 @@
+@startuml
+package "分析任务日志实体"{
+    class TaskLog {
+      - 数据id bigint(19)
+      + 任务日志id bigint(19)
+      + 任务id bigint(19)
+      + 请求id bigint(19)
+      + 摄像头id bigint(19)
+      + 任务状态 tinyint(3)
+      + 分析类型 tinyint(3)
+      + 请求参数 string
+      + 返回参数 string
+      + 消耗时间 float64
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+    }
+    class "status" {
+      + 成功 tinyint(1)
+      + 失败 tinyint(1)
+    }
+}
+
+
+@enduml

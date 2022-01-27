@@ -1,0 +1,37 @@
+@startuml
+package "直播流任务管理实体"{
+    class Task {
+      - 数据id bigint(19)
+      + 直播流任务id bigint(19)
+      + 设备id bigint(19)
+      + 任务状态 taskStatus
+      + 解码来源 decodeFrom
+      + 直播流地址 string
+      + 成功回调地址 string
+      + 失败回调地址 string
+      + 重试次数 int(11)
+      + 采集频率 int(11)
+      + 开始分析时间 int(11)
+      + 结束分析时间 int(11)
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+      + 最近工作心跳时间 timestamp
+      + 最近解码时间 timestamp
+    }
+    class "taskStatus" {
+      + 待解码 tinyint(1)
+      + 解码中 tinyint(1)
+      + 无效工作时间 tinyint(1)
+      + 失效待通知 tinyint(1)
+      + 失效已通知 tinyint(1)
+      + 关闭解码 tinyint(1)
+    }
+    class "decodeFrom" {
+      + CPU tinyint(1)
+      + GPU tinyint(1)
+      + NPU tinyint(1)
+    }
+}
+
+@enduml

@@ -1,0 +1,29 @@
+@startuml
+skinparam defaultFontName Courier
+'skinparam shadowing false
+'skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title decoder-center解码任务时序图
+
+actor       "ai-agent"          as AA
+participant "decoder-center"    as DB
+
+==Decoder-Center创建解码及分析任务==
+AA -> DB:创建直播流解码分析任务
+return 成功创建
+
+|||
+==内存 设备场景管理==
+
+
+loop 设备场景管理(10min/loop)
+note over loop:update/read from DB之后都需要修改缓存
+|||
+ DB -> DB:数据库解码设备时间及场景加载;\n(作用:\n1.decoder心跳上报时返回;\n2.查询设备场景关系)
+|||
+end loop
+
+@enduml

@@ -1,0 +1,13 @@
+@startuml
+autonumber
+actor User as user
+participant "云平台(网关)" as gw
+participant "云平台(统计服)" as st
+
+== 监控预警查询 ==
+user -> gw : 监控预警次数
+st <- gw : 监控预警次数
+st --> gw : 返回次数
+gw --> user : (数据库=>五类预警)日/月数量
+
+@enduml

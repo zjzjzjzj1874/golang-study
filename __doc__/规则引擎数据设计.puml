@@ -1,0 +1,46 @@
+@startuml
+entity EngineSceneEntityPropertyRule <<场景实体属性规则>>{
+    EngineSceneEntityPropertyRuleID(规则ID) : Integer
+    ..
+    ProjectID       (项目ID) : Integer
+    Scene           (场景) : Enum
+    Group           (条件分组) : Integer
+    EntityTypeID    (实体类型ID) : Integer
+    PropertyID      (属性ID) : Integer
+    CompareType     (比较类型枚举) : Enum
+    CompareValue    (比较值) : String
+    ..
+    CreatedAt       (创建时间) : Timestamp
+    UpdatedAt       (更新时间) : Timestamp
+    DeletedAt       (删除时间) : Timestamp
+}
+
+note right of EngineSceneEntityPropertyRule::PropertyID
+    PropertyID不存在只判断对应实体是否存在
+    PropertyID存在判断属性值
+end note
+
+note right of EngineSceneEntityPropertyRule::CompareType
+    属性值比较类型详见下方表格
+end note
+
+entity EntityType <<实体类型>>{
+    EntityTypeID    (实体类型模板ID) : Integer
+    ..
+    ...
+}
+
+entity Property <<实体属性>>{
+    PropertyID      (属性模板ID) : Integer
+    Type            (属性值类型) : Enum
+    ..
+    ...
+}
+
+note right of Property::Type
+    属性值类型为数值才能使用(<、>)判断
+end note
+
+EntityType *-- EngineSceneEntityPropertyRule
+Property *-- EngineSceneEntityPropertyRule
+@enduml

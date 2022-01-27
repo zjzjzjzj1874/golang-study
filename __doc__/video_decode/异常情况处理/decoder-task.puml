@@ -1,0 +1,27 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title decoder-task任务调度中心异常时序图
+
+participant "decoder-task"        as DT
+participant "video-decoder"       as VD
+
+==Video-Decoder模块服务初始化==
+
+loop 心跳上报(5s)
+ VD -> DT:心跳上报运行中的解码任务
+ |||
+ return decoder-task中运行的解码服务(帧率)
+
+ |||
+ VD --> VD: 心跳上报过程中,返回的异常超过配置次数(5次): \n 则认为task任务调度中心异常,解码服务将运行中 \n 的任务状态全部设置为失败,等待task恢复后重试
+
+end loop
+
+
+@enduml

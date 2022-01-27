@@ -1,0 +1,14 @@
+@startuml
+autonumber
+== GPU在线概览 ==
+actor User as user
+participant "网关" as center
+participant "ai-center" as bus
+
+user -> center : GPU在线概览
+bus <- center : 获取缓存中GPU数量及有效心跳数量
+bus --> center : GPU信息
+center --> center : GPU状态及有效性验证
+center --> user : GPU在线数量及总数
+
+@enduml

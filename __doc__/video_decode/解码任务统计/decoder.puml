@@ -1,0 +1,66 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title decoder解码任务时序图
+
+participant "decoder"           as VD
+participant "decoder-center"    as DB
+participant "model-schedule"    as MS
+
+==Decoder模块服务初始化==
+
+loop 心跳上报(5s)
+  |||
+VD -> DB:1).当前解码任务(解码时间和抽帧频率);\n2).流失效且未通知成功设备;
+return 1).decoder-center中的解码时间和抽帧频率;\n2).修改状态成功后,从内存中删除流失效设备;\n3).设备场景全量关系列表
+ |||
+end loop
+
+|||
+==请求 直播流解码 API==
+
+
+DT -> VD:创建解码任务
+ref over VD
+POST https://${decoder_host}/live
+
+入参:Min(抽帧频率),RTSP流地址...
+end ref
+
+return 解码任务创建成功
+
+activate VD
+
+
+group 直播流分析 校验
+    |||
+
+    group 开启协程 直播流分析
+
+    VD <- VD: 判断Min(抽帧频率)
+
+    VD -> VD: 将满足条件的图片,放内存中,设置过期时间,暴露URI,供下游服务消费
+    VD -> MS: 通知消费服务model-schedule,消费新的解码图片(入参包含该设备所有场景).
+    |||
+    end
+
+end
+
+deactivate DB
+
+
+deactivate DB
+
+@enduml
+
+第二版任务
+1.心跳不再向decoder-task上报,而是向decoder-center上报;上报内容(当前解码任务,流失效且通知未成功设备);center的心跳返回该设备对应的所有场景列表;
+    ps:流失效后,在live_decode方法外面立马通知ai-agent流失效;通知成功后修改任务状态;未通知成功加入内存,等待轮询任务来拉取;
+2.根据设备的所有场景,计算出最小的抽帧频率,解码出图片后,将设备对应的所有场景也作为参数,通知model-schedule消费服务;
+3.根据心跳返回的工作时间判定当前是否是工作时间,如果不处于工作时间,则修改任务状态;
+4.解码失败,也需要写解码失败的日志,将解码失败的原因写入日志中;

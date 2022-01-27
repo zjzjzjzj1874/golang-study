@@ -1,0 +1,22 @@
+@startuml
+autonumber
+== Ai事件推送统计(不需要实时) ==
+actor User as user
+participant "云平台(网关)" as gw
+participant "云平台(统计服)" as st
+participant "云平台(任务服)" as notify
+
+notify -> st : 事件推送成功后落库
+alt
+    st --> st : 凌晨1点获取所有通知成功的数据,\n写入统计表
+end
+
+== Ai场景事件排行 ==
+
+user -> gw : Ai场景事件排行
+'gw <-- gw : 查询Ai场景
+gw -> st : 根据以上Ai场景,获取事件通知成功次数
+gw <-- st : 返回场景排行
+gw --> user : 返回场景排行
+
+@enduml

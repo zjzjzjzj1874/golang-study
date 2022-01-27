@@ -1,0 +1,27 @@
+@startuml
+title 电子围栏逻辑流程图
+
+start
+    :model-dispatch分析;
+    if (分析参数是否带有电子围栏) then(否)
+
+    else(是)
+        :将电子围栏传入模型(ROI);
+        if (模型分析是否有实体) then (是)
+            partition 实体过滤 {
+                if (实体与ROI重合度>阈值) then(否)
+                    :无效实体,无需上报;
+                else(是)
+                    :该实体有效;
+                endif
+            }
+
+            if (是否还有实体) then(否)
+            else(是)
+                :生成事件,上报;
+            endif
+        else (否)
+        endif
+    endif
+end
+@enduml

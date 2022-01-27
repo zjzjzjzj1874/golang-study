@@ -1,0 +1,61 @@
+@startuml
+skinparam defaultFontName Courier
+'skinparam shadowing false
+'skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title decoder-task 开启解码任务时序图
+
+participant "decoder-center"    as DB
+participant "decoder-task"      as DT
+participant "decoder"           as VD
+actor       "ai-agent"          as AA
+
+==Decoder-Task待解码设备==
+
+loop 数据库待解码设备(10s)
+|||
+ DT -> DB:1.数据库待解码设备
+ return 需要开启解码的设备
+
+note over DT :判断解码设备是否在工作时间内?是进入一下流程
+
+DT -> VD: 2.开启待解码的设备,下发任务
+return 开启成功
+DT -> DB:3.解码开启成功后,修改设备解码状态\n(注:如果状态修改失败,那会在下次decoder心跳中修复)
+|||
+end loop
+
+==Decoder-Task流失效通知==
+
+loop 解码设备流失效通知(10s)
+|||
+ DT -> DB:1.数据库流地址失效设备
+ return 流地址失效待通知设备
+DT -> AA: 2.通知流失效
+return 通知成功
+DT -> DB:3.流地址失效通知成功后,修改设备解码状态 => 成功通知
+|||
+end loop
+
+==Decoder-Task工作时间内通知解码==
+
+loop 工作时间内通知解码解码(10s)
+|||
+ DT -> DB:1.处于无效工作时间设备
+ return 待工作设备
+ note over DT:判断设备是否处于有效工作时间,是进入下一流程
+DT -> VD: 2.下发解码任务
+return 下发成功
+DT -> DB:3.解码开启成功,修改设备状态
+|||
+end loop
+
+@enduml
+
+第二版任务
+1.10s一次,轮询数据库中所有待解码的设备,下发至解码服务decoder中;
+2.10s一次,轮询数据库中任务状态为流失效待通知的设备,向ai-agent通知失效,通知成功修改任务状态为:失效已通知;
+3.10s一次,轮询未处于工作时间的设备,如果当前时间是正常工作时间,则下发解码通知至decoder服务;

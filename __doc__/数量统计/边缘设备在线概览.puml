@@ -1,0 +1,13 @@
+@startuml
+autonumber
+== 边缘设备在线概览 ==
+actor User as user
+participant "云平台网关" as center
+participant "IOT" as iot
+
+user -> center : 边缘设备在线概览
+iot <- center : 查询设备在线数量及总数
+iot --> center : 边缘设备在线数量及总数
+center --> user : 边缘设备在线数量及总数
+
+@enduml

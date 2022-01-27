@@ -1,0 +1,110 @@
+@startuml
+left to right direction
+
+!define PK <size:12><&key></size><b>
+!define FK <size:12><&link-intact></size><i>
+!define PP <size:12><&caret-right></size>
+
+' 平台配置表
+class Platform {
+  PK id : BIGINT
+  ..
+  FK platform_id : BIGINT
+  uri(平台地址) : STRING
+  port(端口) : INTEGER
+  protocol(协议) : Protocol
+  type(平台类型) : PlatformType
+  configuration(配置) : TEXT -- key和secret放在这里
+  name(平台名称) : STRING
+  description(描述) : TEXT
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 设备基础信息表
+class Device {
+  PK id : BIGINT
+  ..
+  FK device_id : BIGINT
+  FK platform_id : BIGINT
+  name(设备名称) : INTEGER
+  type(设备类型) : DeviceType
+  address(设备地址) : STRING
+  point(地理坐标) : GEOM
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 设备标签表=> 如:rtsp流地址可以放置此处
+class DeviceTag {
+  PK id : BIGINT
+  ..
+  additional_id : BIGINT
+  FK device_id : BIGINT
+  key : TagType
+  value : STRING
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 数据同步日志
+class DataSyncLog {
+  id : BIGINT
+  ..
+  FK platform_id : BIGINT
+  sync_log(同步日志) : TEXT
+  sync_status : SyncStatus
+  sync_total(同步总数) : BIGINT
+  sync_success(成功数量) : BIGINT
+  sync_failure(失败数量) : BIGINT
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+Platform::platform_id *-- Device::platform_id
+Platform::platform_id *-- DataSyncLog::platform_id
+Device::device_id *-- DeviceTag::device_id
+
+' 平台协议
+enum Protocol {
+    HTTP
+    HTTPS
+}
+
+' 平台类型
+enum PlatformType {
+    IOT
+    VIDEO
+}
+
+' 设备类型
+enum DeviceType {
+    CAMERA(摄像头)
+    HUOCHENG(火成)
+    AiDVR(行车记录仪)
+}
+
+' 标签类型
+enum TagType {
+    OWNER(持有者)
+    SHARER(共享者)
+    RTSP(流地址)
+    ORIGIN_ID(原始ID)
+    DEVICE_MN(设备MN号)
+}
+
+' 同步状态
+enum SyncStatus {
+    SUCCESS
+    FAILURE
+}
+
+@enduml

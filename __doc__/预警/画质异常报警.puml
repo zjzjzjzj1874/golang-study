@@ -1,0 +1,17 @@
+@startuml
+autonumber
+== 画质异常报警 ==
+participant "云平台(统计服)" as st
+participant "ai-center" as center
+participant "ai-bus" as bus
+participant "ai-agent" as agent
+participant "gw-model(画质检测)" as gw
+
+agent -> gw : 通知开启直播流画质检测\n 待开启摄像头,分析频率,回调地址
+agent <-- gw : 画质异常报警
+
+== 画质异常报警入库 ==
+agent --> bus : 通知ai-bus画质异常
+bus -> center : 画质异常报警入库
+bus -> st : 报警记录统计
+@enduml

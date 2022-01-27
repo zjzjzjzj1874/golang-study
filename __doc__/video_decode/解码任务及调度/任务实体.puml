@@ -1,0 +1,41 @@
+@startuml
+package "分析任务实体"{
+    class Task {
+      - 数据id bigint(19)
+      + 任务id bigint(19)
+      + 请求id bigint(19)
+      + 摄像头id bigint(19)
+      + 抽帧频率 bigint(19)
+      + 任务类型 tinyint(3)
+      + 任务状态 tinyint(3)
+      + 分析类型 tinyint(3)
+      + 成功回调地址 string
+      + 失败回调地址 string
+      + 请求参数 string
+      + 直播流地址 string
+      + 重试次数 int(11)
+      + 开始分析时间 int(11)
+      + 结束分析时间 int(11)
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+      + 最后解码时间 timestamp
+    }
+    class "taskType" {
+      + 图片 tinyint(1) -- 一次性分析
+      + 视频 tinyint(1)
+      + 直播流 tinyint(1)
+    }
+    class "taskStatus" {
+      + 待分析 tinyint(1)
+      + 分析中 tinyint(1)
+      + 取流失效 tinyint(1)
+      + 停止分析 tinyint(1)
+      + 分析失败 tinyint(1)
+      + 分析成功 tinyint(1)
+    }
+}
+
+Task <|-right- taskType
+
+@enduml

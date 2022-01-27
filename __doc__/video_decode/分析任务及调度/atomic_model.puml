@@ -1,0 +1,78 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title Atomic-Model 原子模型分析的时序图
+
+actor       "model-task"        as MT
+participant "atomic-model"      as AM
+participant "ai-service"        as AS
+
+==请求 实体分析 API==
+
+MT -> AM: EntityAnalyze
+
+ref over AM
+POST https://${atomic-model_host}/entity
+
+入参:图片URI,实体,参数,请求ID...
+end ref
+
+activate AM
+
+group 实体分析 校验
+    |||
+    AS <- AM: 请求对应实体的Ai分析URL
+    AM <-- AS: Ai分析结果
+
+    MT o<-- AM: 返回:分析结果
+end
+
+
+|||
+==请求 属性分析 API==
+
+MT -> AM: PropertyAnalyze
+
+ref over AM
+POST https://${atomic-model_host}/property
+
+入参:图片URI,实体,参数,请求ID...
+end ref
+
+group 属性分析 校验
+    |||
+    AS <- AM: 请求对应属性的Ai分析URL
+    AM <-- AS: Ai分析结果
+
+    MT o<-- AM: 返回:分析结果
+end
+
+
+|||
+==请求 特殊模型分析(去重,图片质量检测) API==
+
+MT -> AM: SpecialAnalyze
+
+ref over AM
+POST https://${atomic-model_host}/special
+
+入参:图片URI,实体,参数,请求ID...
+end ref
+
+group 特殊模型分析 校验
+    |||
+    AS <- AM: 请求对应的Ai分析URL
+    AM <-- AS: Ai分析结果
+
+    MT o<-- AM: 返回:分析结果
+end
+
+
+deactivate AS
+
+@enduml

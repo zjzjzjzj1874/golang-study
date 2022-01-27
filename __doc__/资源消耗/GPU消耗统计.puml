@@ -1,0 +1,14 @@
+@startuml
+autonumber
+== GPU消耗统计 ==
+actor User as user
+participant "配置中心" as center
+participant "redis" as redis
+
+user -> center : GPU资源使用率
+center -> redis : 获取GPU信息数据并排序
+center <-- redis : 返回最新结果
+center <-- center : 排序
+center --> user : 返回GPU信息
+
+@enduml

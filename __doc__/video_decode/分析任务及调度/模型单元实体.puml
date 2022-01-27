@@ -1,0 +1,21 @@
+@startuml
+package "模型单元实体"{
+    class ModelUnit {
+      - 数据id bigint(19)
+      + 模型id bigint(19)
+      + 模型类型 tinyint(3)
+      + 名称 string
+      + Key string
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+    }
+    class "modelType" {
+      + 实体类 tinyint(1)
+      + 属性类 tinyint(1)
+    }
+}
+
+ModelUnit <|-right- modelType
+
+@enduml

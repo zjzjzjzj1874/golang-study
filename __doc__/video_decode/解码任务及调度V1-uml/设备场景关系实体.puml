@@ -1,0 +1,19 @@
+@startuml
+package "设备场景关系实体"{
+    class Task {
+      - 数据id bigint(19)
+      + 设备场景关系id bigint(19)
+      + 直播流任务id bigint(19)
+      + 设备ID bigint(19)
+      + 分析场景 int(11)
+      + 去重检测 tinyint(3)
+      + 画质检测 tinyint(3)
+      + 抽帧频率 bigint(19)
+      + 分析参数 string
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+    }
+}
+
+@enduml

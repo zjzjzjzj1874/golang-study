@@ -1,0 +1,44 @@
+@startuml
+title 投票逻辑
+
+start
+    :开始投票;
+    :model-dispatch返回分析结果;
+    :获取redis中设备场景帧数;
+    if (缓存帧数+本次分析==投票帧数) then (是)
+        partition loop {
+        :遍历实体以及实体属性;
+        if (普通属性投票) then(是)
+            :属性值少数服从多数;
+        else (否:分数属性投票)
+            :属性分数与分数阈值比较;
+            note right
+            * 多帧图片中,每个实体的属性得分
+            * 得分总数与分数阈值做比较
+            * 总分>阈值分？结果是：结果否
+            end note
+        endif
+        }
+
+        if((上次投票通过时间==0) || (上次投票结果 != 本次投票结果) ||
+        (上次投票结果==本次投票结果 && (now-上次投票通过时间)>阈值)) then
+        -> 是;
+        :投票通过;
+            note left
+              * 更新上次投票通过时间
+              * 本次分析及投票结果append入缓存
+            end note
+        else
+        -> 否;
+        endif
+    else (否)
+    endif
+
+    if (缓存总数==投票帧数) then(是)
+        :滑动数据处理(清理最早一次缓存);
+    else (否)
+    endif
+    :数据缓存到redis中;
+    :上报投票结果;
+end
+@enduml

@@ -1,0 +1,44 @@
+@startuml
+
+title 解码任务创建活动图
+
+start
+while (srv-ai-task下发任务时间频率)
+    :从srv-ai-center拉取任务进行数据分组并下发给分析端;
+    note right
+      拉取条件
+      ====
+      * 逻辑删除字段为0
+      * 任务状态为【失效】状态
+    end note
+    if (判断是否有可用ai-agent存在?) then (是)
+        if (调用srv-ai-agent接口是否成功?) then (是)
+          if (解码任务是否已存在(DeviceID作为唯一键进行判断)) then (是)
+            :更新数据库解码端解码参数以及分析参数(不修改当前状态值);
+            note left
+              数据库操作明细
+              ====
+              * 新增日志记录
+              * 更新解码参数
+              * 更新分析参数
+              * 不修改当前解码状态值
+            end note
+          else (否)
+            :新建解码、分析任务;
+            note right
+              数据库操作明细
+              ====
+              * 新增日志记录
+              * 新增解码任务
+              * 新增分析任务
+              * 解码状态值为默认【待解码】
+            end note
+          endif
+          :更新srv-ai-center对应解码任务状态为【有效】;
+        else (否)
+        endif
+    else (否)
+    endif
+endwhile
+stop
+@enduml

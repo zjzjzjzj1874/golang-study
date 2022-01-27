@@ -1,0 +1,21 @@
+@startuml
+
+title 东昌直播流任务
+
+start
+while (srv-ai-task拉取失效直播流任务)
+
+    if (调用srv-ai-agent的CreateLiveAnalyze下发任务是否成功?) then (是)
+        if (调用srv-gw-model服务的AnalyzeLive接口是否成功?) then (是)
+            if (调用srv-video-decode的CreateLiveAnalyze是否成功?) then (是)
+                :video-decode服务,将直播流任务落库;
+            else (否)
+            endif
+        else (否)
+        endif
+    else (否)
+    endif
+
+endwhile
+stop
+@enduml

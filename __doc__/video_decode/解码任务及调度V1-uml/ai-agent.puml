@@ -1,0 +1,20 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title ai-agent创建任务时序图
+
+actor       "ai-agent"          as AA
+participant "decoder-center"    as DB
+
+==ai-agent时序图==
+
+AA -> DB:创建全量分析场景(入参:设备ID,场景,直播流地址)
+DB -> DB:先替换直播流地址,\n设备的场景全量删除,再全量插入
+AA <-- DB: 创建成功
+
+@enduml

@@ -1,0 +1,46 @@
+@startuml
+
+title 解码任务下发至解码节点活动图
+
+start
+while (解码任务下发任务时间频率)
+    :从srv-decoder-center拉取解码任务数据;
+    note right
+      拉取条件
+      ====
+      * 逻辑删除字段为0
+      * 任务状态为【待解码】状态
+    end note
+    :从缓存拉取缓存数据;
+    note right
+      缓存数据结构
+      ====
+      Map<DeviceID>Cache{}
+    end note
+    :分组数据;
+    note right
+      分组条件
+      ====
+      * 数据库状态异常数据
+      ** A.数据库记录不为【解码中】，实际为【解码中】的任务
+      ** B.数据库记录不为【待解码】，实际为已失效的任务
+      * 数据库状态正常数据【待下发数据】
+      ** 缓存中不存在此设备数据
+      ** 缓存中此设备数据已过期
+    end note
+    if (数据库状态异常数据?) then (是)
+        if (数据库记录不为【解码中】，实际为【解码中】的任务?) then (是)
+            :更新srv-decoder-center对应解码任务状态为【解码中】;
+        elseif (数据库记录不为【待解码】，实际为已失效的任务?) then (是)
+            :更新srv-decoder-center对应解码任务状态为【失效待通知】;
+        else
+            :打印日志，未考虑异常数据;
+        endif
+    else (否)
+        :下发任务至解码节点;
+        :记录任务执行节点IP至缓存，若缓存中不存在此设备数据则新建此设备缓存;
+        :更新srv-decoder-center对应解码任务状态为【解码中】;
+    endif
+endwhile
+stop
+@enduml

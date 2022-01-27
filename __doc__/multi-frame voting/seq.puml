@@ -1,0 +1,73 @@
+@startuml
+skinparam backgroundColor #EEEBDC
+
+title 投票时序图
+'actor UI #LightRed
+box "中心端" #LightBlue
+	participant "bff-ai-manager" as mag
+	database configuration
+    control "ai-task" as ai_task
+	database "ai-center" as center
+	participant "ai-agent" as agent
+end box
+box "解码分析端" #DarkSalmon
+	database "decoder-center" as decoder_center
+	control "decoder-task" as task
+	participant "decoder"
+	participant "model-schedule" as schedule
+	participant "model-dispatch" as dispatch
+end box
+    ====
+    note over mag:投票规则
+    UI -[#2ab538]> mag: POST /创建投票规则
+    mag -[#2ab538]> configuration: POST /规则落库
+    return result
+    mag -[#2ab538]-> UI: 返回规则创建结果
+    ====
+    note over configuration: 创建分析任务
+    UI -[#2ab538]> mag :POST/创建分析任务
+    mag -[#2ab538]> configuration :拉取投票默认配置
+    return result
+    mag -> center :POST/创建分析任务,修改后落库(详细结构见伪代码)
+    return  result
+    mag --> UI:返回创建分析任务结果
+    ====
+loop 中心端下发解码分析任务
+    ai_task -> center: 拉取失效任务
+    return result
+
+    ai_task -> agent:下发解码任务
+    agent -> decoder_center:解码任务透传
+    return 返回落库结果
+    ai_task <-- agent:成功
+
+end
+loop 解码端下发分析任务
+    task -> decoder_center: 拉取解码任务
+    return result
+
+    task -> decoder:下发解码任务
+    return 同步返回
+end
+
+loop async:直播流解码
+    decoder -> schedule: 出图后,下发至模型调度服务
+    return 调用成功返回(异步分析)
+
+    schedule -> dispatch: 模型异步送分析
+    dispatch -[#2ab538]> ai原子模型 : 原子模型分析
+    return 分析结果(&& TrackID)
+    alt has no trackID
+        dispatch -[#2ab538]-> ai去重模型 :去重服务调用
+        return (trackID)
+    end group
+    dispatch -[#2ab538]-> schedule: ai分析结果
+
+    schedule <-[#2ab538]> schedule:投票
+    schedule <-[#2ab538]> schedule:去重
+    schedule -[#2ab538]> agent:投票去重结果,事件回调
+    schedule --> decoder_center:分析日志落库
+
+end
+
+@enduml

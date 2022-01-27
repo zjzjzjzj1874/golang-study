@@ -1,0 +1,21 @@
+@startuml
+package "分析统计实体"{
+    class analyze-statistic {
+      - 数据id bigint(19)
+      + 分析统计id bigint(19)
+      + 设备ID bigint(19)
+      + 统计日期(天为单位) bigint(19)
+      + 分析场景 int(11)
+      + 分析提交总数 int(11)
+      + 成功分析次数 int(11)
+      + 失败分析次数 int(11)
+      + 平均分析耗时 int(11) (TODO 分析时间从dispatch返回)
+      + 最大分析耗时 int(11)
+      + 最小分析耗时 int(11)
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+    }
+}
+
+@enduml

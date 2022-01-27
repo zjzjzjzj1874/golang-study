@@ -1,0 +1,33 @@
+@startuml
+autonumber
+== 设备/摄像头/资源报警 ==
+actor User as user
+participant "云平台网关" as ai
+participant "云平台(统计服)" as st
+participant "云平台(ai-center)" as center
+participant "云平台(ai-bus)" as bus
+participant "IOT" as iot
+participant "边缘设备" as dev
+
+loop
+    iot <- dev : 上报资源信息及版本
+end
+iot -> bus : 边缘设备/摄像头/资源报警
+bus -> center : 报警记录生成
+center -> st : 报警记录统计
+
+== 实时报警 ==
+user -> ai : 查询实时报警列表(getRealtimeAlarm)\n (预警类型,设备ID,设备名称,做一个增量查询==>增量显示未读)
+st <- ai : 实时报警查询
+st --> ai : 返回实时报警信息
+user <-- ai : 返回实时报警信息
+
+== 获取报警详情 ==
+user -> ai : 获取报警详情(getAlarmDetail)
+user <-- ai : 返回响应并修改报警状态为已读
+
+==标记已读未读状态(patch)==
+user -> ai : 获取报警详情(getAlarmDetail)
+user <-- ai : 返回响应并修改报警状态为已读
+
+@enduml

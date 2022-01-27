@@ -1,0 +1,41 @@
+@startuml
+title 解码任务心跳上报活动图
+
+start
+while (心跳上报时间频率)
+    :srv-decoder -> srv-decoder-center上报;
+    note right
+      心跳包至少需要包含以下数据内容
+      ====
+      * 设备ID
+      * 节点IP
+    end note
+    :srv-decoder-center接收心跳上报包;
+    note right
+      接收心跳后需要进行以下处理
+      ====
+      * 更新缓存中心跳时间，若缓存不存在此设备数据则新建此设备缓存
+      * 获取设备解码与分析配置
+      * 解码时间和当前时间做比较,超过某个阈值则判定解码异常,
+      需要重新下发(防住解码基础库假死导致不能正常解码)
+    end note
+    if (心跳上报数据是否异常，心跳上报分析节点IP与缓存记录分析节点不一致？&&
+        解码心跳距当前时间间隔是否超阈值) then (是)
+        :srv-decoder-center响应心跳上报包;
+        note right
+          响应数据需要包含以下数据内容
+          ====
+          * 停止分析指令
+        end note
+    else (否)
+        :srv-decoder-center响应心跳上报包;
+        note right
+          响应数据需要包含以下数据内容
+          ====
+          * 设备解码配置
+          * 设备分析配置
+        end note
+    endif
+endwhile
+stop
+@enduml

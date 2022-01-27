@@ -1,0 +1,18 @@
+@startuml
+title 数据同步任务
+
+start
+while (设备信息同步任务执行频率(1h)/手动调用同步接口)
+    :从IOT/视频平台平台拉取全量设备数据;
+    :从device-hub数据库拉取所有设备;
+
+    if (数据库设备是否被删除?) then (是)
+        :删除device-hub数据库该设备;
+    else
+        :更新该设备信息;
+    endif
+
+endwhile
+stop
+
+@enduml

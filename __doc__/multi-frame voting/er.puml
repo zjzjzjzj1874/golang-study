@@ -1,0 +1,128 @@
+@startuml
+left to right direction
+
+!define PK <size:12><&key></size><b>
+!define FK <size:12><&link-intact></size><i>
+!define UK <size:12><&link-intact></size><i>
+!define PP <size:12><&caret-right></size>
+
+note as n
+    新增表:Scene => 场景配置表
+end note
+' 场景配置表
+class Scene {
+  PK id : BIGINT
+  ..
+  UK scene_id(场景ID) : uint8
+  name(场景名称) : string
+  label(场景标签) : string
+  desc(场景描述) : string
+  analyze_option_type(场景类型) : AnalyzeOptionType
+  vote_frame_count(投票帧数) : uint8
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 实体类型配置表(已有)
+class EntityType {
+  PK id : BIGINT
+  ..
+  UK entity_type_id(实体ID) : BIGINT
+  f_name(实体名称) : string
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 属性配置表
+class Property  {
+  PK id : BIGINT
+  ..
+  UK property_id(属性ID) : BIGINT
+  FK entity_type_id(实体ID) : BIGINT
+  f_name(属性名称) : string
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 场景实体配置
+class SceneEntity {
+  PK id : BIGINT
+  ..
+  UK scene_entity_id(ID) : BIGINT
+  FK entity_type_id(实体ID) : BIGINT
+  FK scene_id(场景ID) : BIGINT
+  f_name(属性名称) : string
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 场景实体属性配置
+class SceneEntityPropertyConfig {
+  PK id : BIGINT
+  ..
+  FK scene_entity_id(实体ID) : BIGINT
+  FK property_id(属性ID) : BIGINT
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 设备场景配置表 -- live-device
+class LiveDevice {
+  PK id : BIGINT
+  ..
+  ...
+  vote-type(投票类型) : VoteType
+  vote-params(投票参数) : VoteParams
+  ...
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+' 设备场景配置表 -- device-analyze-option
+class DeviceAnalyzeOption {
+  PK id : BIGINT
+  ..
+  ...
+  vote-type(投票类型) : VoteType
+  vote-param(投票配置参数:配置表中压缩数据) : STRING
+  ...
+  ..
+  createTime : timestamp
+  updateTime : timestamp
+  deleteTime : timestamp
+}
+
+EntityType::entity_type_id *-- Property::entity_type_id
+EntityType::entity_type_id *-- SceneEntity::entity_type_id
+EntityType::entity_type_id *-- SceneEntityPropertyConfig::scene_entity_id
+Property::property_id *-- SceneEntityPropertyConfig::property_id
+Scene::scene_id *-- SceneEntity::scene_id
+
+
+' 平台类型
+enum VoteType {
+    NoVote(不投票)
+    NORMAL(普通投票:是否--少数服从多数)
+    SCORE(分数投票:得分高低)
+}
+
+' 场景类型
+enum AnalyzeOptionType {
+    NORMAL(普通场景)
+    FENCE(电子围栏场景)
+}
+
+
+@enduml

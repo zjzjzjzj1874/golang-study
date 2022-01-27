@@ -1,0 +1,35 @@
+@startuml
+skinparam defaultFontName Courier
+skinparam shadowing false
+skinparam noteBackgroundColor #eee
+skinparam noteBorderColor transparent
+skinparam sequenceGroupBorderColor #ccc
+skinparam sequenceReferenceBorderColor #ccc
+
+title 取流失败异常时序图
+
+participant "video-decoder"   as VD
+participant "ai-agent"        as AA
+participant "IOT"             as IOT
+participant "decoder-task"    as DT
+
+==Video-Decoder模块按桢率取流==
+
+loop 取流抽帧
+ VD -> VD: 解码任务中的直播流地址取流失败: \n 停止本次分析任务,修改数据库分析状态
+ |||
+ VD -> AA: 通知取流失败:云平台报警
+ return 通知成功
+
+ |||
+ AA -> IOT: 请求更换摄像头直播流地址
+ return 最新直播流地址
+
+ |||
+ AA -> DT: 重新发起直播流分析任务
+ DT -> DT: 轮询数据库待开启任务,开始分析
+
+end loop
+
+
+@enduml

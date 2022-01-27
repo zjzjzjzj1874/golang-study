@@ -1,0 +1,50 @@
+@startuml
+title 投票逻辑
+
+start
+    :开始投票;
+    :model-dispatch返回分析结果;
+    if (至少有一个属性需要投票) then(否)
+
+    else(是)
+        :获取redis中设备场景帧数;
+        if (缓存帧数==投票帧数) then (是)
+            :将本次分析append到缓存帧数中;
+            partition 投票接口(Vote) {
+                :投票数据处理;
+                note right
+                  滑动投票处理:清理最早一次缓存,确保缓存的数量=投票帧数
+                  分数累计处理:分数超过阈值置零处理
+                end note
+                partition loop {
+                    :遍历实体以及实体属性;
+                    if (该属性是否需要投票) then(否)
+                    else(是)
+                        :投票数据整合;
+                        note right
+                        * 根据实体属性,整合投票帧数内得分情况
+                        end note
+                    endif
+                }
+                :投票阈值判断;
+                note right
+                * 多帧图片中,每个实体的属性得分
+                * 得分总数与分数阈值做比较=> 实现AI算法
+                * 总分>阈值分？结果是：结果否
+                end note
+            }
+
+            :投票结束;
+            note right
+              * 更新上次投票通过时间
+              * 本次分析及投票结果append入缓存
+            end note
+        else (否)
+            :将本次分析append到缓存帧数中;
+        endif
+
+        :数据缓存到redis中;
+        :上报投票结果;
+    endif
+end
+@enduml

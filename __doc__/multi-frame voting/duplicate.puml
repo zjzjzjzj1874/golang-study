@@ -1,0 +1,33 @@
+@startuml
+title 去重逻辑
+
+start
+    :投票结果;
+
+        :投票结果实体;
+        :遍历所有实体;
+    partition 遍历实体属性 {
+         :遍历实体所有属性;
+        :本次分析的key = hash(实体TraceID_属性名称+属性值);
+        if (缓存是否存在该key) then
+        ->是;
+           :已上报,不需要再次上报;
+        else
+        ->否;
+            :将改key加入待上报数组;
+        endif
+        if (待上报数组 > 0) then
+        -> 是;
+        :上报该实体所有属性;
+        :该实体所有hash key存入缓存,设置默认过期时间;
+        note right
+        默认过期时间 = 配置中心配置实体过期时间
+        end note
+        else
+        -> 否;
+        :本次无需上报;
+        endif
+    }
+
+end
+@enduml

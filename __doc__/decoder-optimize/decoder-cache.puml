@@ -1,0 +1,31 @@
+@startuml
+
+title 解码设备缓存定义
+
+class Cache {
+    RecentDecoderTime: Timestamp
+    DecoderNodeIP: String
+    Stop: Bool
+    AnalyzeDetails: []AnalyzeDetail
+}
+
+class AnalyzeDetail {
+    RecentAnalysisTime: Timestamp
+    AnalysisFrequency: Integer
+    AnalysisFreq: Integer
+    Parameter: String
+    StartTime: Integer
+    EndTime: Integer
+    FilterDuplicates: Bool
+    FilterLowQuality: Bool
+    AnalyzeType: Integer
+}
+
+map "Map **DeviceID => Cache**" as CacheMap  {
+ DeviceID => Cache
+}
+
+Cache::AnalyzeDetails --> AnalyzeDetail
+CacheMap::Cache --> Cache
+
+@enduml

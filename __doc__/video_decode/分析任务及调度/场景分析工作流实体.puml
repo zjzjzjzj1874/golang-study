@@ -1,0 +1,15 @@
+@startuml
+package "分析工作流实体"{
+    class ProcessEntity {
+      - 数据id bigint(19)
+      + 工作流id bigint(19)
+      + 父工作流id bigint(19)
+      + 分析场景id bigint(19)
+      + 模型单元id bigint(19) ==> 本次分析哪个模型
+      + 创建时间 timestamp
+      + 删除时间 timestamp
+      + 更新时间 timestamp
+    }
+}
+
+@enduml

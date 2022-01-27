@@ -1,0 +1,15 @@
+@startuml
+title 电子围栏逻辑流程图
+
+start
+'    :model-dispatch分析;
+    if (设备是否可以获取回放直播流) then(否)
+
+    else(是)
+        :http请求回放直播流;
+        :ffmpeg下载回放视频;
+        :根据分析时间戳合成视频;
+        :生成事件,上报;
+    endif
+end
+@enduml
