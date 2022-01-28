@@ -2,7 +2,10 @@ module github.com/zjzjzjzj1874/golang-study
 
 go 1.17
 
-require github.com/mojocn/base64Captcha v1.3.5
+require (
+	github.com/bits-and-blooms/bitset v1.2.1
+	github.com/mojocn/base64Captcha v1.3.5
+)
 
 require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
