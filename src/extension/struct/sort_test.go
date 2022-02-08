@@ -14,7 +14,7 @@ func TestBy_Sort(t *testing.T) {
 		{"Solla", 68, 177},
 	}
 
-	// 这些部分可以移动到people中
+	// 结构体不同字段排序函数的实现
 	heightFunc := func(p1, p2 *People) bool {
 		return p1.Height < p2.Height
 	}
@@ -25,6 +25,10 @@ func TestBy_Sort(t *testing.T) {
 		return p1.Age > p2.Age
 	}
 
+	By(func(p1, p2 *People) bool {
+		return p1.Name > p2.Name
+	}).Sort(people)
+	fmt.Printf("By name DESC:%+v\n", people)
 	By(heightFunc).Sort(people)
 	fmt.Printf("By height ASC:%+v\n", people)
 	By(ageDescFunc).Sort(people)
