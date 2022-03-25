@@ -4,10 +4,12 @@ import "fmt"
 
 func change(a []int) {
 	fmt.Printf("slice's addr in func's header is:%p\n", &a)
-	//a[0] = 0
-	//a = []int{6, 6, 6}
-	a = a[:]
 	a[0] = 0
+	a = []int{6, 6, 6}
+	a[0] = 100
+
+	//a = a[:]
+	//a[0] = 0
 	fmt.Printf("slice's addr in func's tail is:%p\n", &a)
 }
 
