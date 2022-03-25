@@ -13,7 +13,7 @@ golang study
 > ### helper
 > helper provide some tools,and some can use in project
 
-> ## golang中的坑
+> ## golang中的注意事项
 
 - **slice**
   - `slice与nil`比较
