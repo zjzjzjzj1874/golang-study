@@ -11,6 +11,15 @@ import (
 )
 
 func TestDemoSelect(t *testing.T) {
+	t.Run("测试 nonBlock", func(t *testing.T) {
+		err := nonBlock()
+		if err != nil {
+			t.Error(err)
+			return
+		}
+		fmt.Println("success")
+	})
+
 	t.Run("直接阻塞", func(t *testing.T) {
 		go func() {
 			for {
