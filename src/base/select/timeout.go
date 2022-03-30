@@ -7,12 +7,16 @@ import (
 )
 
 type DemoSelect struct {
-	signal chan struct{}
+	signal     chan struct{}
+	exitSignal chan struct{} // 退出信号
 }
 
-func (d DemoSelect) waitForHeartbeat() {
+func (d *DemoSelect) waitForHeartbeat() {
 	for {
 		select {
+		case <-d.exitSignal:
+			fmt.Println("ready to exit,bye")
+			return
 		case <-d.signal:
 			fmt.Println("信号到达")
 			// do some business

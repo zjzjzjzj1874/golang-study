@@ -1,6 +1,7 @@
 package _select
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -9,7 +10,8 @@ import (
 func TestDemoSelect_waitForHeartbeat(t *testing.T) {
 	t.Run("#select for timeout", func(t *testing.T) {
 		demo := DemoSelect{
-			signal: make(chan struct{}, 1),
+			signal:     make(chan struct{}, 1),
+			exitSignal: make(chan struct{}, 1),
 		}
 
 		go demo.waitForHeartbeat()
@@ -19,8 +21,10 @@ func TestDemoSelect_waitForHeartbeat(t *testing.T) {
 				time.Sleep(time.Duration(rand.Intn(i)) * time.Second * 2)
 				demo.signal <- struct{}{}
 			}
+			fmt.Println("send exit signal")
+			demo.exitSignal <- struct{}{}
 		}()
 
-		time.Sleep(time.Minute)
+		<-demo.exitSignal
 	})
 }
