@@ -16,11 +16,11 @@ golang study
 > ## golang知识点
 - **并发编程**
   - **同步原语与锁**
-  - 锁是并发编程的同步原语,保证多个Goroutine在访问同一片内存地址时不会出现竞争条件
-  - `sync`包中提供了一些同步的基本原语,如:`sync.Mutex、sync.RWMutex、sync.WaitGroup、sync.Once、sync.Cond`;
-  - 不过这些基本原语提供的仅是较为基础的同步功能,相对原始,多数情况下建议使用抽象层级更高的`Channel`实现同步;
-  - 扩展原语:`errgroup、Semaphore、SingleFlight`
-    - `errgroup`:使用case见`src/base/sync/errgroup`中的demo
+    - 锁是并发编程的同步原语,保证多个Goroutine在访问同一片内存地址时不会出现竞争条件
+    - `sync`包中提供了一些同步的基本原语,如:`sync.Mutex、sync.RWMutex、sync.WaitGroup、sync.Once、sync.Cond`;
+    - 不过这些基本原语提供的仅是较为基础的同步功能,相对原始,多数情况下建议使用抽象层级更高的`Channel`实现同步;
+    - 扩展原语:`errgroup、Semaphore、SingleFlight`
+      - `errgroup`:使用case见`src/base/sync/errgroup`中的demo
 - **slice**
   - `slice与nil`比较
       - `slice == nil`的比较:本质上是与`slice.Data(uintptr)`比较,所以需要看是否被初始化
