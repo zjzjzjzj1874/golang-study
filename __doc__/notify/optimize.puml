@@ -1,0 +1,23 @@
+@startuml
+title 通知重试优化
+
+|#lightblue|success|
+start
+    #lightblue:事件合成成功;
+    repeat
+    #lightblue:推送至第三方;
+    if (**推送成功?**) is (成功) then
+        #lightblue:修改工作流状态;
+        #lightblue:添加工作流日志;
+        break
+    else (失败)
+        |#lightgray|failure|
+        #lightgray:**线性时间间隔增加重试**;
+        #lightgray:**记录失败日志**;
+    endif
+    repeat while (**不超出最大推送时间**) is (Yes) not (No:**添加至死信队列**)
+    |Final step|
+    #white:设置工作流终态;
+    #white:结束工作流流转;
+stop
+@enduml
