@@ -1,4 +1,5 @@
 @startuml
+' more syntax see https://plantuml.com/zh/class-diagram
 title 通知重试优化
 
 |#lightblue|success|
