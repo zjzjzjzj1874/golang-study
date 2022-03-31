@@ -4,7 +4,22 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"unicode/utf8"
 )
+
+func Test_StringOrRune(t *testing.T) {
+	t.Run("#count", func(t *testing.T) {
+		str := "hello,我是中国人"
+		count := utf8.RuneCountInString(str)
+		fmt.Println("RuneCountInString长度:", count) // 11
+
+		c1 := utf8.RuneCount([]byte(str))
+		fmt.Println("RuneCount长度:", c1) // 11
+
+		fmt.Println("len长度:", len(str)) // 21:一个中文占3个字节
+	})
+
+}
 
 func Test_timeTicker(t *testing.T) {
 	t.Run("#time.Ticker test case", func(t *testing.T) {
