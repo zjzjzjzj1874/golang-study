@@ -14,4 +14,12 @@ func Test_timeTicker(t *testing.T) {
 		}
 		time.Sleep(time.Minute)
 	})
+
+	t.Run("#time.Ticker test case", func(t *testing.T) {
+		tc := time.NewTicker(time.Second) // second ticker => to execute every second task
+		for range tc.C {
+			fmt.Println(time.Now().Format(time.RFC3339))
+		}
+		time.Sleep(time.Minute)
+	})
 }
