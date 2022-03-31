@@ -22,12 +22,12 @@ func nonBlock() error {
 	wg := sync.WaitGroup{}
 	wg.Add(len(tasks))
 	for i := range tasks {
-		go func() {
+		go func(i int) {
 			defer wg.Done()
 			if err := tasks[i].Run(); err != nil {
 				errCh <- err
 			}
-		}()
+		}(i)
 	}
 	wg.Wait()
 
