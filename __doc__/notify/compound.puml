@@ -1,0 +1,27 @@
+@startuml
+' more syntax see https://plantuml.com/zh/class-diagram
+title 合成规则优化
+
+|#lightblue|success|
+start
+    #lightblue:获取设备订阅者列表;
+    #lightblue:过滤重复规则;
+    #lightblue:循环不同规则;
+
+    repeat
+    #lightblue:规则合成;
+    if (**合成成功?**) is (失败) then
+        #lightblue:加入待推送队列;
+        break
+    else (成功)
+        |#lightgray|failure|
+        #lightgray:**进入下次合成**;
+        #lightgray:**记录失败日志**;
+    endif
+
+    repeat while (**更多规则?**)
+    :;
+    #white:进入推送流程;
+    |Final step|
+stop
+@enduml

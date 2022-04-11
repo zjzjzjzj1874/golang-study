@@ -1,0 +1,76 @@
+@startuml
+skinparam backgroundColor #EEEBDC
+
+title OCR模块时序图
+
+box "中心端" #LightBlue
+	participant "web" as web
+	participant "bff-oc" as oc
+    control "ai-task" as ai_task
+	database "ai-center" as center
+end box
+
+box "ocr端" #DarkSalmon
+	participant "core-ocr" as core
+	database "DB" as db
+	participant "api-ocr" as api
+	participant "bff-ocr" as bff
+	participant "ocr-web" as wb
+end box
+
+participant "subscribe" as sub
+    ==事件审核==
+    web -[#2ab538]> oc: POST/人工审核通过
+    oc -[#2ab538]> center: POST/人工审核
+    return result
+    oc -[#2ab538]> web:result
+
+    ==Notify==
+    ai_task -[#2ab538]> center: Get/获取审核结果
+    return result
+
+    ==OCR模块待开发==
+    ai_task -[#2ab538]> core: Post/Notify:通知OCR服务
+    core -> db:tcp/数据存储
+    return
+
+    core -> db:tcp/上次推送时间
+    return
+    core -> core:超时判断\n阈值校验\n结果输出
+    core -> sub:Post/通知订阅方
+    return result
+    core -> db:记录通知日志
+    return
+    core -> ai_task:result
+
+    ==ocr自动补偿任务==
+loop OCR端任务管理
+    core -> db: 拉取设备列表
+    return result
+
+    core -> db:tcp/上次推送时间
+    return
+    core -> core:超时判断\n阈值校验\n结果输出
+    core -> sub:Post/通知订阅方
+    return result
+    core -> db:记录通知日志
+    return
+end
+
+    ==订阅者(第三方)查询==
+    sub -> api:Get/查询设备数据记录
+    api -> core:Get/查询透传
+    core -> db:tcp/查询数据库
+    return result
+    core --> api:查询结果
+    api --> sub: result
+
+    ==前端接口交互==
+    wb -> bff:增删改查
+    bff -> core:增删改查
+    core -> db:CURD
+    return result
+    core --> bff:result
+    bff --> wb:result
+
+@enduml
