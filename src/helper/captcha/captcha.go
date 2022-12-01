@@ -2,10 +2,11 @@
 package captcha
 
 import (
-	captcha "github.com/mojocn/base64Captcha"
 	"math/rand"
 	"sync"
 	"time"
+
+	captcha "github.com/mojocn/base64Captcha"
 )
 
 func init() {
