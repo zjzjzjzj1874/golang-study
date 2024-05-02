@@ -1,4 +1,5 @@
 @startuml
+' 最好看的序列图，参考demo用这个
 skinparam backgroundColor #EEEBDC
 
 title 投票时序图
