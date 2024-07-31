@@ -208,9 +208,17 @@ func TestDefer(t *testing.T) {
 			}(x)
 			return 0 // 返回0，x=0作为参数传给defer的有参函数，后续变化只会修改入参的x
 		}
+		f4 := func() (x int) {
+			y := 5
+			defer func() {
+				x = x + 5
+			}()
+			return y // 返回10，y=5作为参数传给defer的有参函数x, x = 5,后续x = x + 5 = 10
+		}
 
 		fmt.Println(f1()) // 1
 		fmt.Println(f2()) // 5
 		fmt.Println(f3()) // 0
+		fmt.Println(f4()) // 10
 	})
 }
