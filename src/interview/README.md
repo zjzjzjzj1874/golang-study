@@ -225,11 +225,40 @@ header：绑定队列与交换器时指定一个键值对，当交换器在分�
   * 以上三种消息将成为"死信"。死信消息会被RabbitMQ进行特殊处理，如果配置了死信队列，那么消息会被丢进死信队列，如果没有配置，该消息将会被丢弃。
   * 为每个需要使用死信的业务队列配置一个死信交换机，这里同一个项目的死信交换机可以共用一个，然后为每个业务队列分配一个单独的路由key，死信队列只不过是绑定在死信交换机上的队列;
     死信交换机也是普通的交换机，类型【Direct、Fanout、Topic】，只不过是用来接收死信的交换机。
+  * 死信队列：x-dead-letter...
+```javascript
+agruments.put("x-dead-letter-exchange","dlx.exchange"); // 通过这个参数设置死信交换机， dlx.exchange是死信交换机名称 
+channel.queueDeclare(queueName, true, false, false, agruments);// 申明普通队列，并将agruments传入
+channel.queueBind(queueName, exchangeName, routingKey); // 
+channel.exchangeDeclare("dlx.exchange", "topic", true, false, null); // 建立死信交换机，申明交换机类型为Topic
+channel.queueDeclare("dlx.queue", true, false, false, null);// 创建死信队列
+channel.queueBind("dlx.queue", "dlx.exchange", "#"); // 将交换机和队列绑定，并使用#通配符路由键：将所有消息发送到死信队列
+```
 * 延时队列：用来存放在指定时间后处理的消息，通常可以用来做一些有过期性质的业务，如十分钟未支付则取消订单；
   * TTL：一条消息或者队列中所有消息的最大存活时间
   * 如果一条消息设置了TTL属性，或者进入了设置有TTL属性的队列，那么这条消息如果在TTL设置的时间内没有被消费，则会成为“死信”。如果同时配置了队列的TTL和消息的TTL，取较小的值。
   * 只需要一直消费死信队列的消息
   * 即死信队列+TTL可以实现延时队列
+
+### 简述RabbitMQ的普通集群模式
+RabbitMQ的集群分为普通集群和镜像队列。 
+普通集群模式解决不了高可用的问题。
+![img_4.png](img_4.png)
+* 存储元数据
+  * 队列元数据：队列名称和它的属性
+  * 交换器元数据：交换器名称、类型和属性
+  * 绑定元数据：一张简单的表格展示如何将消息路由到队列
+  * vhost元数据：为vhost内的队列、交换器和绑定提供命名空间和安全属性
+* 消息内容分别存储到对应的节点上，某个节点如果宕机，其他节点不存在副本，所以是不能保证集群高可用的。
+* 为什么只同步元数据
+  * 存储空间：每一个节点都保存全量数据的话，影响消息堆积能力(木桶效应，导致性能瓶颈)
+  * 性能：消息的发布者需要将消息复制到每一个集群节点(性能损耗大)
+* 客户端如果连接的是非队列数据所在的节点(即客户端请求的队列不在直连的Broker上)，则该节点会进行路由转发，包括发送和消费数据
+* 集群节点类型
+  * 磁盘节点：将配置信息和元信息存储在磁盘上，持久化message信息；
+  * 内存节点：将配置信息和元信息存储在内存中，性能优于磁盘节点。但是依赖磁盘节点进行持久化；
+* RabbitMQ要求集群只要有一个磁盘节点，当节点加入和离开集群时，必须通知磁盘节点(如果集群中唯一的磁盘节点崩溃了，则不能进行创建队列、创建交换器、创建绑定、添加用户、更改权限、添加和删除集群节点)。
+  如果唯一磁盘节点崩溃，集群是可以保持运行的，但是不能更改任何东西。因此官方建议在集群中至少设置两个磁盘节点，只要一个正常，集群就能正常操作。
 
 ### 简述RabbitMQ的事务机制
 RabbitMQ的事务类似于Redis的事务(Multi)，都是弱类型事务.但是RabbitMQ的事务交互较多(begin,select -> select.ok; commit -> commit.ok; rollback)
@@ -246,6 +275,7 @@ RabbitMQ的事务类似于Redis的事务(Multi)，都是弱类型事务.但是Ra
 * 如果其中任意一个环节出问题，会抛出IoException，用户可以拦截异常进行事务回滚，或者决定要不要重复消费；事务会降低RabbitMQ的性能。
 
 ### RabbitMQ如何保证消息的可靠性传输
+* 可靠性首先需要对message做持久化
 * 使用事务消息(但是性能会大大下降)
 * 使用消息确认机制(Ack)
   * 发送方确认
@@ -256,6 +286,62 @@ RabbitMQ的事务类似于Redis的事务(Multi)，都是弱类型事务.但是Ra
   * 接收方确认
     * 申明队列时，指定noack=false，Broker会等待消费者手动返回ack，才会删除消息，否则立刻删除；
     * Broker的ack没有超时机制，只会判断连接是否断开，如果断开，消息会被重新发送(所以重复消费需要保证接口的幂等性)；
+
+### RabbitMQ如何确保消息发送与接收
+* 发送方确认机制
+  * 信道需要设置为Confirm模式，则所有在信道上发布的消息会分配一个唯一ID；
+  * 一旦消息被投递到Queue(可持久化的消息需要写入磁盘)，信道会发送一个确认(ack)给生产者(包含唯一ID)
+  * 如果RabbitMQ发生内部错误从而导致消息丢失，会发送一条nack(未确认)消息给生产者
+  * 所有被发送的消息都将被Confirm(即ack)或者被nack一次；但是没有对消息被Confirm的快慢做任务保证，并且同一条消息不会被同时Confirm和nack；
+  * 发送方确认模式是异步的，生产者应用程序在等待确认的同时，可以继续发送消息。当确认消息到达生产者，生产者回调方法被触发；
+    * ConfirmCallback接口：只确认是否能正确到达Exchange中，成功到达则回调；
+    * ReturnCallback接口：消息失败返回时回调
+* 接收方确认机制
+  * 消费者在什么队列时，可以指定noAck参数(是否需要手动确认)，当noAck=false时，RabbitMQ会等待消费者显式发回ack信号后才从内存(或磁盘)中移除消息，否则消息被消费后会被立即删除；
+  * 消费者接收每一条消息后必须进行确认(消息接收和消息确认时两个不同操作)，只有消费者确认了消息，RabbitMQ才能安全地把消息从队列中删除；
+  * RabbitMQ不会为未ack的消息设置超时时间，他判断此消息是否需要重新投递给消费者的唯一依据是消费该消息的消费者是否已经断开。这么设计的原因是RabbitMQ允许消费者消费一条消息的时间可以很长，保证数据的最终一致性。
+  * 如果消费者返回ack之前断开了连接，RabbitMQ会重新分发给下一个订阅的消费者(可能存在重复消费的问题，需要接口保证幂等性)。
+
+### RabbitMQ可以直连队列吗？
+答案首先是可以的，但是直连就只能将消息投递到队列中，散失了一定的灵活性。
+消费者和生产者使用相同的参数申明队列，重复申明不会改变队列
+* channel.queueDeclare(queue, durable, exclusive, autoDelete, arguments);
+  * queue: 队列名字
+  * durable：队列持久化标志，true为需要持久化队列
+  * exclusive：排他队列，仅对创建的链接可见；对链接中的其他channel都可见，其他链接不能重复申明，链接关闭队列会被自动删除；
+  * autoDelete：自动删除，如果该队列没有任务订阅的消费者的话，该队列会被自动删除。这种队列适用于临时队列；
+  * arguments：Map类型，队列参数设置
+    * x-message-ttl：超时时间数字，消息队列中消息的存活时间，超过会被删除
+    * x-expires：超时时间数字，队列自身的空闲存活时间，指定时间内没有被访问，就会被删除
+    * x-max-length、x-max-length-bytes：队列最大长度和空间，超过会删除老的数据；
+    * x-dead-letter-exchange和x-dead-letter-routing-key：设置死信队列；
+    * x-max-priority：队列支持的优先级别，需要生产者在发送消息时指定，消息按照优先级从高到低分发给消费者；
+* channel.basicPublish(exchange, routingKey, mandatory, immediate, basicProperties, body);
+  * exchange：交换机名
+  * RoutingKey：路由键
+  * mandatory：为true时，如果exchange根据自身类型和消息RoutingKey无法找到一个符合条件的queue，那么会调用basic.return方法将消息返回给生产者；channel.AddReturnListener添加一个监听器，
+    当broker执行basic.Return方法时，会回调handleReturn方法，这样就可以处理变为死信的消息了；设置为false时，出现上述情形时，broker会直接将消息丢弃；
+  * immediate：3.0以前，这个标志高速服务器如果该消息关联的queue上有消费者，则马上将消息投递给它；如果所有queue都没有消费者，直接把消息返还给生产者，不用将消息入队列等待消费者，3.0后取消了该参数；
+  * basicProperties：消息的详细属性，包括优先级别，持久化，到期时间等；header类型的exchange要用到其中的header字段；
+  * body：消息实体，字节数组
+* QueueingConsumer：一个已经实现好了的Consumer，相比于自己实现Consumer接口，这个是比较安全快捷的方式。该类基于jdk的BlockingQueue实现，handleDelivery方法中奖收到的消息封装成Delivery对象，
+  并存放到BlockingQueue中，这相当于消费者本地存放了一个消息缓存队列。nextDelivery()方法底层调用的BlockingQueue的阻塞方法是take()。
+* channel.basicConsumer(queue, autoAck, consumer);
+  * queue: 队列名
+  * autoAck：自动应答标志，true为自动应答；
+  * Consumer：消费者对象，可以自己实现Consumer接口，建议使用QueueingConsumer。
+
+### RabbitMQ的镜像队列原理
+RabbitMQ的普通集群模式无法保证高可用，因为消息不存在副本，某个broker宕机后消息就可能会丢失；
+所以为了实现RabbitMQ的高可用，使用普通集群+镜像队列的模式可实现。镜像队列，顾名思义：应该就是broker的队列在其他broker中存在镜像副本； 
+![img_5.png](img_5.png)
+上图中，粉色的为master队列，灰色的为slave队列，灰色表示正常情况下，队列不对外提供服务，只同步master的队列信息；当master宕机后，**存在时间最长**的slave会被选举为新的master，此时才会对外提供服务；
+* GM：环形链表实现，负责消息的广播，所有的GM组成gm_grouup，行成链表结构，负责监听相邻节点的状态，以及传递消息到相邻节点，master的GM收到消息时代表消息同步完成
+* mirror_queue_master/slave：负责消息的处理，操作BlockingQueue(阻塞队列)；
+* Queue：负责AMQP协议(commit、rollback和ack等)
+* master：处理读写
+
+
 
 
 
