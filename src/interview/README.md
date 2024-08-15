@@ -342,6 +342,34 @@ RabbitMQ的普通集群模式无法保证高可用，因为消息不存在副本
 * master：处理读写
 
 
+## RocketMQ
+阿里集团实现的一个MQ，经历了双十一的考验，性能和稳定性还是有保证；RocketMQ参考了Kafka的实现，不过做了一点优化，保证了消息的零丢失；目前已经被阿里捐给了Apache基金会。
+### 简述RocketMQ的架构设计
+![img_6.png](img_6.png)
+NameServer：作用和Kafka的Zookeeper类似，维护的是producer、Topic、Queue以及Consumer的关系；但是ns是去中心化的，Kafka的zk是主从模式，所以ns的可用性比zk的可用性高；
+Broker和Topic和Kafka的Broker、Topic都一样；Topic下面的Queue和Kafka Topic下的Partition一样；不过Queue也不是主从模式的，也区别于Partition。
+
+* NS和Broker底层使用netty通信，然后又长连接发送心跳包，定期往NS中注册Topic；
+* Producer先和NS连接，拉取Topic对应的Broker信息，拿到之后再和Broker建立连接，发送消息；
+* Broker通过CommitLog存储消息内容，不区分Topic，每个commitlog一个G；
+* ConsumerQueue：commitlog基于Topic的索引文件；
+* IndexFile通过key或时间区间
+* 路由信息包括：BrokerServer、Topic、ConsumerQueueID等信息；
+* 所以，RocketMQ是基于一个全量的日志文件+两个索引文件来组织数据的。
+
+### 简述RocketMQ的持久化机制
+* CommitLog：日志数据文件，被所有Queue共享，大小为1G，写满之后重新生成，顺序写
+* ConsumerQueue：逻辑queue(可以理解成CommitLog的索引文件)，消息先到达CommitLog，然后异步转发到consumerQueue，包含Queue在CommitLog中的物理位置偏移量offset、消息实体内容的大小和messageTag的hash值。
+  大小约600w个字节，写满之后重新生成，顺序写；
+* indexFile：通过key或者时间区间来查找CommitLog中的消息，文件名以创建的时间戳命名，固定的单个indexFile大小为400M，可以保存2000w个索引；
+* 所有队列共用一个日志数据文件，避免了Kafka的分区数过多、日志文件过多导致磁盘IO读写压力较大造成性能瓶颈(Kafka存在很多文件，一个Partition可能对应多个segment文件，所以Broker的Partition数量超过64个之后，性能衰减很严重)；
+  RocketMQ的queue只存储少量数据，更加轻量化，对于磁盘的访问是串行化避免磁盘竞争；缺点在于：写入是顺序写，但读是随机读，先读consumerQueue，再度CommitLog，会降低消息读的效率；
+* 消息发送到Broker后，会被写入CommitLog，写之前加锁，保证顺序读写，然后再转发到consumerQueue
+* 消费消息时，先从consumerQueue读取消息在CommitLog中的起始物理偏移量offset，消息大小、消息tag和hashcode值，再从CommitLog读取消息内容；
+  * 同步刷盘：消息持久化到磁盘(fsync)才会给生产者返回ack，可以保证消息可靠，但会影响性能；
+  * 异步刷盘：消息写入PageCache就返回ack给生产者，刷盘采用异步线程，降低读写延迟提高性能和吞吐；但是可靠性会降低；
+
+
 
 
 
