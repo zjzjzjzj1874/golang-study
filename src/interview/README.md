@@ -369,6 +369,21 @@ Broker和Topic和Kafka的Broker、Topic都一样；Topic下面的Queue和Kafka T
   * 同步刷盘：消息持久化到磁盘(fsync)才会给生产者返回ack，可以保证消息可靠，但会影响性能；
   * 异步刷盘：消息写入PageCache就返回ack给生产者，刷盘采用异步线程，降低读写延迟提高性能和吞吐；但是可靠性会降低；
 
+### RocketMQ如何实现顺序消费消息？
+场景：电商项目中，先生成订单，后支付；或其他场景，消息有先后关系，要怎么去实现？(MQ本身没有，通过一些设计去处理)
+* 首先，默认是不能保证的，需要程序保证发送消息和消费的是同一个queue，多线程消费也无法保证
+* 发送顺序：发送端自己业务逻辑保证先后，发往一个固定的queue，生产者可以在消息体上设置消息的顺序
+* 发送者实现MessageQueueByHash接口，选择一个queue进行发送，也可以使用RocketMQ提供的默认实现
+  * SelectMessageQueueByHash：按参数的hashcode与可选队列进行求余选择
+  * SelectMessageQueueByRandom：随机选择
+* MQ：queue本身就是顺序追加写，秩序保证一个队列统一时间只有一个Consumer消费，通过加锁实现，Consumer上的顺序消费有一个定时任务，每隔一段时间向Broker发送请求延长锁定
+* 消费端：pull模式：消费者需要自己维护需要拉取的queue，一次拉取的消息都是顺序的，需要消费端自己保证顺序消费
+* push模式：消费实例实现MQPushConsumer接口，提供注册监听的方法消费消息，registerMessageListener、重载方法；
+  * MessageListenerConcurrently：并行消费；
+  * MessageListenerOrderly：串行消费，Consumer会把消息放到本地队列并加锁，定时任务保证锁的同步
+
+
+
 
 
 
