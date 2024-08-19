@@ -341,7 +341,6 @@ RabbitMQ的普通集群模式无法保证高可用，因为消息不存在副本
 * Queue：负责AMQP协议(commit、rollback和ack等)
 * master：处理读写
 
-
 ## RocketMQ
 阿里集团实现的一个MQ，经历了双十一的考验，性能和稳定性还是有保证；RocketMQ参考了Kafka的实现，不过做了一点优化，保证了消息的零丢失；目前已经被阿里捐给了Apache基金会。
 ### 简述RocketMQ的架构设计
@@ -382,6 +381,38 @@ Broker和Topic和Kafka的Broker、Topic都一样；Topic下面的Queue和Kafka T
   * MessageListenerConcurrently：并行消费；
   * MessageListenerOrderly：串行消费，Consumer会把消息放到本地队列并加锁，定时任务保证锁的同步
 
+### RocketMQ的组件及功能
+RocketMQ由NameServer集群、Producer集群、Consumer集群和Broker集群组成，消息生产和消费的大致原理如下：
+* Broker在启动的时候向所有的NameServer注册，并保持长连接，每30s发送一次心跳；
+* Producer在发送消息的时候，从NameServer获取Broker服务器地址，根据负载均衡算法选择一台服务器来发送消息；
+* Consumer消费消息的时候同样从NameServer获取Broker地址，然后主动拉取消息来消费；
+
+### RocketMQ如何保证消息不丢失
+* 生产者
+  * 同步阻塞的方式发送消息，加上失败重试机制；如果Broker存储失败，可以通过查询确认；
+  * 异步发送需要重写回调方法，检查发送结果；
+  * ack机制，因为可能储存CommitLog、存储consumerQueue失败，此时对消费者不可见，所以要保证ack
+* Broker
+  * 同步刷盘；
+  * 集群模式下，采用同步复制，等待slave复制完成才返回确认
+* 消费者
+  * offset手动提交，消息消费保证幂等
+
+### RocketMQ事务消息原理
+* 依赖producer实现TransactionListener接口
+  * ExecuteLocalTransaction方法会在发送消息后调用，用于执行本地事务，如果本地事务执行成功，RocketMQ再提交消息；
+  * checkLocalTransaction用于对本地事务做检查，RocketMQ依赖此方法做补偿
+* 通过两个内部的Topic来实现对消息的两阶段支持：
+  * prepare：将消息(消息上带有事务标识)投递到一个名为RMS_SYS_TRANS_HALF_TOPIC的Topic中，而不是投递到真正的Topic中；
+  * commit/rollback：producer再通过transactionListener的executeLocalTransaction方法执行执行本地事务，当producer的localTransaction处理成功或失败后，producer会想Broker发送Commit或者rollback命令；
+    如果是commit，则Broker会将投递到RMS_SYS_TRANS_HALF_TOPIC中的消息投递到真实的topic中，然后再投递一个表示删除的消息到RMQ_SYS_TRANS_OP_HALF_TOPIC中，表示当前事务已完成；
+    如果是rollback，则没有投递到真实的topic的过程，只需要投递表示删除的消息到RMQ_SYS_TRANS_OP_HALF_TOPIC，最后消费者和消费普通的消息一样消费事务消息。
+  * 第一阶段(Prepare)失败：给应用返回发消息失败
+  * 事务失败：发送回滚命令给broker，由broker执行消息的回滚；
+  * commit或rollback失败：由broker定时向producer发起事务检查，如果本地事务成功，则提交消息事务，否则回滚消息事务；
+* 事务状态的检查有两种情况：
+  * commit/rollback：broker会执行相应的commit/rollback操作；
+  * 如果是TRANSACTION_NOT_TYPE，则一段时间后会再次检查，当检查的次数超过上限(默认15次，可配置)则丢弃消息；
 
 
 
@@ -407,3 +438,6 @@ Broker和Topic和Kafka的Broker、Topic都一样；Topic下面的Queue和Kafka T
 
 
 
+
+
+# 计算机知识
