@@ -1,13 +1,5 @@
 # OpenStack
 
-
-
-
-
-
-
-
-
 ## 云计算的前世今生
 * IT系统架构的演进，分为三个阶段：物理机->虚拟机->云计算
   * 面向物理设备的裸机：应用直接部署运行在物理机，资源利用率很低；
@@ -60,6 +52,9 @@ OpenStack为私有云和公有云提供可扩展的弹性云计算服务，这�
   * UI界面(Dashboard)：Horizon
   * 测量(Metering)：**Ceilometer**
   * 部署编排(Orchestration)：Heat
+  ![img_7.png](img_7.png)
+* 核心组件交互逻辑
+  ![img_8.png](img_8.png)
 
 ## OpenStack常用组件及服务
 
@@ -197,7 +192,8 @@ MQ是消费-生产者的典型实现，一端不断往消息队列中写入消�
   * LRU算法局限性：LRU算法并不是针对全局空间的存储数据，而是针对Slab，Slab是Memcached中具有同样大小的多个Chunk集合；
   * 数据访问安全性：Memcached服务端并没有相应的安全认证机制，通过非加密的telnet连接即可对Memcached服务器端的数据进行各种操作。
 
-### [共享组件-Keystone身份认证服务](https://www.cnblogs.com/cloudhere/p/10811666.html)
+### [核心组件-Keystone身份认证服务](https://www.cnblogs.com/cloudhere/p/10811666.html)
+  ![img_6.png](img_6.png)
   Keystone是opensta的组件之一，是用于为OpenStack中的其他组件提供统一认证的服务，包括身份验证、令牌发放和校验、服务列表、用户权限定义等等。
   OpenStack云环境中的所有服务之间的授权和认证都需要经过keystone，所以keystone是云平台中第一个需要安装的服务。
 * Keystone简介
@@ -293,7 +289,7 @@ MQ是消费-生产者的典型实现，一端不断往消息队列中写入消�
     [trust]
   ```
 
-### [共享组件-Glance镜像服务](https://www.cnblogs.com/cloudhere/p/10811888.html)
+### [核心组件-Glance镜像服务](https://www.cnblogs.com/cloudhere/p/10811888.html)
 * Glance介绍：Glance是OpenStack项目中负责镜像管理的模块，功能包括虚拟机镜像的查找、注册和检索等。提供restfulAPI可以查询虚拟机镜像的metadata以及获取惊喜。
   Glance可以将镜像保存到多种后端存储上，如简单的文件存储或对象存储。
   * Image(镜像)：是可执行文件的系统快照。
@@ -322,7 +318,7 @@ MQ是消费-生产者的典型实现，一端不断往消息队列中写入消�
   * `/etc/glance/glance-api.conf`
   * `/etc/glance/glance-registry.conf`
 
-### [共享组件-Nova计算服务](https://www.cnblogs.com/cloudhere/p/10811917.html)
+### [共核心组件-Nova计算服务](https://www.cnblogs.com/cloudhere/p/10811917.html)
 * Nova介绍：是OpenStack最核心的服务，负责维护和管理云环境的计算资源。OpenStack作为IaaS的云操作系统，虚拟机生命周期管理也就是通过Nova来实现的。
   * 功能及用途
     * 实例生命周期管理
@@ -388,6 +384,7 @@ MQ是消费-生产者的典型实现，一端不断往消息队列中写入消�
   * nova-compute拿到后，通过HTTP请求cinder-api获取镜像；
   * Cinder再次找keystone认证，通过后将镜像资源返回给nova-compute；
   * 此时nova-compute根据instance的信息调用配置的虚拟化驱动来创建虚拟机。
+  ![img_5.png](img_5.png)
 * 删除nova-compute节点
   * 控制节点上操作查看计算节点`node1`
   ```shell
@@ -403,7 +400,7 @@ MQ是消费-生产者的典型实现，一端不断往消息队列中写入消�
   ```
   * 然后可以登录MySQL查看nova-compute的状态，再删除MySQL中的`node1`信息即可
 
-### [共享组件-Neutron网络服务](https://www.cnblogs.com/cloudhere/p/10812189.html)
+### [核心组件-Neutron网络服务](https://www.cnblogs.com/cloudhere/p/10812189.html)
 * Neutron介绍
   * 传统网络管理很大程度依赖管理员手工配置；云环境下网络非常复杂，尤其是多租户场景中，用户随时都会创建、修改和删除网络；所以手工配置无法满足。
     云时代灵活性和自动化成为主流：软件定义网络SDN(Software-Defined Networking)。
@@ -465,8 +462,44 @@ MQ是消费-生产者的典型实现，一端不断往消息队列中写入消�
   * Service plugin：实现了Extension plugin api，在数据库中维护Router，LB、Security Group等资源的状态，并负责调用相应的Agent在network provider上执行相关操作，如创建router
   * 总结：Neutron Server包括两部分：提供API服务，运行Plugin，即 **Neutron Server = API + Plugin**
 
+### [核心组件-Horizon管理界面](https://www.cnblogs.com/cloudhere/p/10812252.html)
+* Horizon介绍： 为OpenStack提供一个Web前端的管理界面，通过Horizon所提供的Dashboard，管理员可以通过WebUI对OpenStack整体云环境进行管理，并观察各种操作结果与运行状态。
+
+### [核心组件-Cinder存储服务](https://www.cnblogs.com/cloudhere/p/10815241.html)
+* Cinder介绍
+  * 理解Block Storage：操作系统获得存储空间的方式一般有两种：
+    * 通过某种协议(SAS、SCSI、SAN、iSCSI等)挂接裸硬盘，然后分区、格式化、创建文件系统；或者直接使用裸硬盘存储数据(数据库)
+    * 通过NFS、CIFS等协议，mount远程的文件系统
+    * 第一种裸硬盘的方式叫Block Storage(块存储)，每个裸硬盘通常也被称作Volume(卷)，第二种叫做文件系统存储。NAS和NFS服务器，以及各种分布式文件系统提供的都是这种存储；
+  * 理解Block Storage Service(Cinder)：Block storage service提供对volume从创建到删除整个生命周期的管理。从instance的角度看，挂载的每一个volume都是一块硬盘，Cinder的具体功能：
+    * 提供REST API让用户能够查询和管理volume、volume snapshot以及vollume type
+    * 提供scheduler调度volume创建请求，合理优化存储资源的分配
+    * 提供Driver架构支持多种backend(后端)存储方式，包括LVM、NFS、Ceph和其他例如EMC、IBM等商业存储产品和方案；
+* Cinder组件
+  * cinder-api：接收api请求(和volume生命周期相关)，调用cinder-volume，是整个cinder的门户组件。所有cinder的请求都首先由cinder-api处理。cinder-api向外界暴露若干HTTP rest api接口。Keystone中可以查询对应endpoint。
+  * cinder-volume：管理volume服务，与volume-provider协调工作，管理volume的生命周期。运行cinder-volume服务的节点被称为存储节点；
+  * Driver架构：通过Driver架构支持多种volume-provider。cinder-volume为provider定义了统一的接口，provider只需要实现这些接口，就可以以Driver的形式即插即用到OpenStack系统中。
+  * volume-provider：数据的存储设备，为 volume 提供物理存储空间。 cinder-volume 支持多种 volume provider，每种 volume provider 通过自己的 driver 与cinder-volume 协调工作。
+  * volume-scheduler：通过调度算法选择最合适的存储节点创建volume。创建volume时，scheduler会基于容量、VolumeType等条件选择最合适的存储节点，然后创建volume。
+  * MQ：子服务通过消息队列进行通信和相互协作。
+  * Database Cinder：有些数据需要存放到DB中，一般使用MySQL。安装在控制节点中的，名称一般为`cinder`。
+  * 物理部署方案：Cinder服务部署在控制节点和存储节点上，一般cinder-api和cinder-scheduler部署在控制节点中；cinder-volume部署在存储节点中；
+    不过一个节点既可以是控制节点，也可以是存储节点，所以这些服务是有可能是部署在同一个节点中的。
+    至于cinder-provider放在那里，provider是独立的，cinder-volume使用Driver和volume通信丙协调工作。所以只需要将Driver和cinder-volume放一起就可以了。
+* Cinder设计思想：沿袭其他的服务，如Nova的设计思想。
+  * API前端
+    * cinder-api：作为Cinder组件对外的唯一窗口，向客户暴露Cinder能够提供的功能。
+    * 优点：
+      * 对外提供同一接口，隐藏实现细节
+      * API提供REST标准调用服务，便于与第三方系统集成
+      * 可以通过运行多个API服务实例实现高可用
+  * Scheduler调度服务：Cinder可以有多个存储节点，当需要创建volume时，cinder-scheduler会根据存储节点的属性和资源使用情况选择一个最合适的节点来创建volume。
+  * Worker工作服务：调度服务只管分配任务，cinder-volume作为Worker是真正执行任务的工作服务。Scheduler和Worker划分职能，使OpenStack非常容易横向扩展。
+  * Driver框架：OpenStack作为开放的IaaS云操作系统，支持业界各种优秀的技术，这些技术可以是开源的，也可以是商业收费的。存储节点支持多种cinder-provider，只要实现统一的driver接口即可。
+
 ## 参考链接
 * [云计算OpenStack](https://www.cnblogs.com/cloudhere/category/1439151.html)
+* [整体介绍](https://jckling.github.io/2021/04/02/OpenStack/OpenStack%20%E6%95%B4%E4%BD%93%E4%BB%8B%E7%BB%8D/index.html)
 
 
 
