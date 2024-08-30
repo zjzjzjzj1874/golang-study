@@ -123,7 +123,7 @@ zk在新版本中不断被弱化，最新版本的zk已经被移除了。这道�
 ### Kafka消息高可靠解决方案
 * 消息发送可靠
   * ack机制：0(不重试，即发送之后不管成功失败) 1(Leader写入成功就返回，但可能写完Leader没同步就宕机，数据会丢失) all/-1(等待ISR同步完成再返回，可靠)
-  * unclean.leader.election.enable: false 禁止选举ISR以外的follower为Leader。ISR(和Leader状态同步的)，OSR(和Leader状态不同步的)，ISR和OSR可动态转换，状态一直则可以加入ISR。
+  * unclean.leader.election.enable: false 禁止选举ISR以外的follower为Leader。ISR(和Leader状态同步的)，OSR(和Leader状态不同步的)，ISR和OSR可动态转换，状态一致时则可以加入ISR。
   * tries > 1: 重试次数
   * min.insync.replicas > 1: 最小同步副本数，没满足该值前，不提供读写服务，写操作会异常
 * 消费可靠
